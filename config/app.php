@@ -109,7 +109,6 @@ return [
          * Package Service Providers...
          */
         Laravel\Sail\SailServiceProvider::class,
-        BeyondCode\LaravelWebSockets\WebSocketsServiceProvider::class,
         Laravel\Tinker\TinkerServiceProvider::class,
 
         /*
@@ -117,7 +116,7 @@ return [
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
     ],

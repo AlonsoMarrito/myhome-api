@@ -14,14 +14,9 @@ class Pregunta extends Model
     protected $fillable = [
         'pregunta',
         'id_evento',
-        'votos', // lo guardaremos como JSON
     ];
 
     public $timestamps = false;
-
-    protected $casts = [
-        'votos' => 'array', // Laravel lo convertirá automáticamente a array
-    ];
 
     // Relación con Evento
     public function evento()

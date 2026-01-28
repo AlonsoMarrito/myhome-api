@@ -20,20 +20,24 @@ class PreguntaController extends Controller
         return Pregunta::all();
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'pregunta' => 'required|string',
-            'id_evento' => 'required|integer|exists:eventos,id', 
-        ]);
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'pregunta' => 'required|string',
+        'id_evento' => 'required|integer|exists:eventos,id', 
+    ]);
 
-        $pregunta = Pregunta::create($validated);
+    $pregunta = Pregunta::create($validated);
 
-        // Disparar evento para WebSocket
-        broadcast(new NuevaPregunta($pregunta))->toOthers();
+    // Convertir a array para que el evento funcione
+    $preguntaArray = $pregunta->toArray();
 
-        return response()->json($pregunta, 201);
-    }
+    // Disparar evento inmediatamente
+    event(new NuevaPregunta($preguntaArray));
+
+    return response()->json($pregunta, 201);
+}
+
 
     public function show($id)
     {
@@ -47,7 +51,6 @@ class PreguntaController extends Controller
 
         $validated = $request->validate([
             'pregunta' => 'sometimes|required|string',
-            'votos' => 'sometimes|array',
         ]);
 
         $pregunta->update($validated);

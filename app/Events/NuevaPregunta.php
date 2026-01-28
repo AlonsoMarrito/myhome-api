@@ -1,35 +1,34 @@
 <?php
-
 namespace App\Events;
 
-use App\Models\Pregunta;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
 
-class NuevaPregunta implements ShouldBroadcast
+class NuevaPregunta implements ShouldBroadcastNow
 {
     use InteractsWithSockets, SerializesModels;
 
     public $pregunta;
 
-    public function __construct(Pregunta $pregunta)
+    public function __construct(array $pregunta)
     {
         $this->pregunta = $pregunta;
     }
 
-    // Nombre del canal
-    public function broadcastOn()
+    public function broadcastOn(): Channel
     {
         return new Channel('eventos');
     }
 
-    // Nombre del evento que recibe el cliente
-    public function broadcastAs()
+    public function broadcastAs(): string
     {
         return 'NuevaPregunta';
+    }
+
+    public function broadcastWith(): array
+    {
+        return $this->pregunta;
     }
 }
