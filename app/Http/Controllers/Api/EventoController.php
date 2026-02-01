@@ -5,51 +5,70 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Evento;
 use Illuminate\Http\Request;
+use App\Events\NuevaNotificacion;
 
 class EventoController extends Controller
 {
-    // GET /api/eventos
     public function index()
     {
         return Evento::all();
     }
 
-    // GET /api/eventos/{id}
     public function show($id)
     {
         return Evento::findOrFail($id);
     }
 
-    // POST /api/eventos
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'fecha' => 'required|date',
             'descripcion' => 'required|string',
         ]);
 
-        return Evento::create($request->all());
+        $evento = Evento::create($validated);
+
+        event(new NuevaNotificacion([
+            'tipo' => 'evento',
+            'actor' => 'usuario',
+            'detalles' => $evento->descripcion,
+            'fecha' => now()->format('Y-m-d H:i:s')
+        ]));
+
+        return response()->json($evento, 201);
     }
 
-    // PUT /api/eventos/{id}
     public function update(Request $request, $id)
     {
         $evento = Evento::findOrFail($id);
 
-        $request->validate([
+        $validated = $request->validate([
             'fecha' => 'required|date',
             'descripcion' => 'required|string',
         ]);
 
-        $evento->update($request->all());
+        $evento->update($validated);
+
+        event(new NuevaNotificacion([
+            'tipo' => 'evento',
+            'actor' => 'usuario',
+            'detalles' => 'Evento actualizado',
+            'fecha' => now()->format('Y-m-d H:i:s')
+        ]));
 
         return $evento;
     }
 
-    // DELETE /api/eventos/{id}
     public function destroy($id)
     {
-        Evento::destroy($id);
+        Evento::findOrFail($id)->delete();
+
+        event(new NuevaNotificacion([
+            'tipo' => 'evento',
+            'actor' => 'usuario',
+            'detalles' => 'Evento eliminado',
+            'fecha' => now()->format('Y-m-d H:i:s')
+        ]));
 
         return response()->json([
             'message' => 'Evento eliminado correctamente'
