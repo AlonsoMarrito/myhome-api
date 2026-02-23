@@ -9,9 +9,15 @@ use App\Events\NuevaNotificacion;
 
 class RespuestaController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum');
+        $this->middleware('admin')->only('destroy');
+    }
+
     public function index()
     {
-        return Respuesta::all();
+        return response()->json(Respuesta::all());
     }
 
     public function store(Request $request)
@@ -26,9 +32,9 @@ class RespuestaController extends Controller
 
         event(new NuevaNotificacion([
             'tipo' => 'respuesta',
-            'actor' => 'usuario',
+            'actor' => $request->user()->id,
             'detalles' => 'Nueva respuesta registrada',
-            'fecha' => now()->format('Y-m-d H:i:s')
+            'fecha' => now()->toDateTimeString()
         ]));
 
         return response()->json($respuesta, 201);
@@ -36,53 +42,57 @@ class RespuestaController extends Controller
 
     public function show($id)
     {
-        return Respuesta::findOrFail($id);
+        return response()->json(Respuesta::findOrFail($id));
     }
 
     public function update(Request $request, $id)
     {
         $respuesta = Respuesta::findOrFail($id);
 
-        $respuesta->update($request->validate([
+        $validated = $request->validate([
             'respuesta' => 'required|string'
-        ]));
+        ]);
+
+        $respuesta->update($validated);
 
         event(new NuevaNotificacion([
             'tipo' => 'respuesta',
-            'actor' => 'usuario',
+            'actor' => $request->user()->id,
             'detalles' => 'Respuesta actualizada',
-            'fecha' => now()->format('Y-m-d H:i:s')
+            'fecha' => now()->toDateTimeString()
         ]));
 
-        return $respuesta;
+        return response()->json($respuesta);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         Respuesta::findOrFail($id)->delete();
 
         event(new NuevaNotificacion([
             'tipo' => 'respuesta',
-            'actor' => 'usuario',
+            'actor' => $request->user()->id,
             'detalles' => 'Respuesta eliminada',
-            'fecha' => now()->format('Y-m-d H:i:s')
+            'fecha' => now()->toDateTimeString()
         ]));
 
-        return response()->json(['message' => 'Respuesta eliminada']);
+        return response()->json([
+            'message' => 'Respuesta eliminada'
+        ]);
     }
 
     public function count(Request $request)
     {
-        $id_pregunta = $request->query('id_pregunta');
+        $request->validate([
+            'id_pregunta' => 'required|integer|exists:preguntas,id'
+        ]);
 
-        $si = Respuesta::where('id_pregunta', $id_pregunta)->where('respuesta', 'si')->count();
-        $no = Respuesta::where('id_pregunta', $id_pregunta)->where('respuesta', 'no')->count();
-        $abstengo = Respuesta::where('id_pregunta', $id_pregunta)->where('respuesta', 'abstengo')->count();
+        $id_pregunta = $request->id_pregunta;
 
         return response()->json([
-            'si' => $si,
-            'no' => $no,
-            'abstengo' => $abstengo
+            'si' => Respuesta::where('id_pregunta', $id_pregunta)->where('respuesta', 'si')->count(),
+            'no' => Respuesta::where('id_pregunta', $id_pregunta)->where('respuesta', 'no')->count(),
+            'abstengo' => Respuesta::where('id_pregunta', $id_pregunta)->where('respuesta', 'abstengo')->count()
         ]);
     }
 }

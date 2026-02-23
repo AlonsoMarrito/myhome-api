@@ -15,7 +15,6 @@ class Kernel extends HttpKernel
     ];
 
     protected $middlewareGroups = [
-        // 👇 AGREGA ESTE BLOQUE 'web' PARA CORREGIR EL ERROR
         'web' => [
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
@@ -32,5 +31,8 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'auth' => \App\Http\Middleware\Authenticate::class,
+        'auth:sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
     ];
 }
