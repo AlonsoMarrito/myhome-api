@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class AuthController extends Controller
 {
+    // LOGIN
     public function login(Request $request)
     {
         $request->validate([
@@ -32,6 +34,7 @@ class AuthController extends Controller
         ]);
     }
 
+    // LOGOUT
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -41,6 +44,7 @@ class AuthController extends Controller
         ]);
     }
 
+    // CAMBIO DE CONTRASEÑA CON LA CONTRASEÑA ACTUAL
     public function changePassword(Request $request)
     {
         $request->validate([
@@ -59,10 +63,67 @@ class AuthController extends Controller
         $user->password = Hash::make($request->new_password);
         $user->save();
 
-        $user->tokens()->delete();
+        $user->tokens()->delete(); // cerrar todas las sesiones
 
         return response()->json([
             'message' => 'Contraseña actualizada. Todas las sesiones fueron cerradas.'
         ]);
+    }
+
+    // ENVIAR CORREO DE RECUPERACIÓN DE CONTRASEÑA
+    public function sendRecoverEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:usuarios,email',
+        ]);
+
+        try {
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+
+            if ($status === Password::RESET_LINK_SENT) {
+                return response()->json([
+                    'message' => 'Correo de recuperación enviado correctamente.'
+                ]);
+            } else {
+                return response()->json([
+                    'message' => 'No se pudo enviar el correo.'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al enviar el correo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // RESETEAR CONTRASEÑA CON TOKEN
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email|exists:usuarios,email',
+            'password' => 'required|confirmed|min:6',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->password = Hash::make($password);
+                $user->save();
+                $user->tokens()->delete(); // Cierra todas las sesiones
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'Contraseña actualizada correctamente.'
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Token inválido o expirado.'
+            ], 400);
+        }
     }
 }

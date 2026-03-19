@@ -15,7 +15,14 @@ use App\Events\NuevaPregunta;
 |--------------------------------------------------------------------------
 */
 
+// Login
 Route::post('/login', [AuthController::class, 'login']);
+
+// Recuperar contraseña (correo)
+Route::post('/recover-password', [AuthController::class, 'sendRecoverEmail']);
+
+// Resetear contraseña con token
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 /*
 |--------------------------------------------------------------------------
@@ -25,11 +32,13 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // CAMBIAR CONTRASEÑA
+    // Cambiar contraseña con la actual
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
+    // Recursos básicos de la app
     Route::get('/personas', function () {
         return DB::table('personas')->get();
     });
@@ -38,18 +47,21 @@ Route::middleware('auth:sanctum')->group(function () {
         return DB::table('departamentos')->get();
     });
 
+    // CRUD de eventos y preguntas
     Route::apiResource('eventos', EventoController::class);
     Route::apiResource('preguntas', PreguntaController::class);
 
+    // Respuestas
     Route::get('/respuestas-count', [RespuestaController::class, 'count']);
     Route::apiResource('respuestas', RespuestaController::class);
 
+    // Asistencias
     Route::apiResource('asistencia', AsistenciaController::class)
         ->only(['index', 'store', 'show', 'destroy']);
 
     /*
     |--------------------------------------------------------------------------
-    | SOLO ADMIN
+    | RUTAS SOLO PARA ADMIN
     |--------------------------------------------------------------------------
     */
 
